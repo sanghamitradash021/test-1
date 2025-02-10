@@ -40,3 +40,4 @@ Product.init({
     tableName: "Products",
     timestamps: false,
 });
+exports.default = Product;
