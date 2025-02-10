@@ -42,11 +42,6 @@ const add = async (req: Request, res: Response): Promise<void> {
         );
 
 
-
-
-
-
-
     } catch (error) {
         console.log("error in adding");
     }
@@ -54,36 +49,44 @@ const add = async (req: Request, res: Response): Promise<void> {
 
 const getproduct = async (req: Request, res: Response): Promise<void> {
     try {
-        const { product_id, product_name, category, price }: any = req.body;
-        const result = (await sequelize.query(`SELECT * FROM Products`
-            {
-                replacements: {},
-                type: QueryTypes.SELECT,
-            }
-        )
-        );
 
-        const { id } = req.body.user;
-        console.log("id ", id);
+        const { product_id } = req.body;
+        console.log("id ", product_id);
 
         const allprod = await sequelize.query("SELECT * FROM Products ");
+        res.json(allprod[0]);
+
     } catch (error) {
-        console.log("error in getting products");
+        res.status(500).json({ message: " error in getting products" })
+
     }
 
-}
+};
 
 const updateproduct = async (req: Request, res: Response): Promise<void> {
     try {
         const { product_id, product_name, category, price }: any = req.body;
         const result = (await sequelize.query(` `))
+
+        await sequelize.query(
+            "UPDATE Users SET product_name = :fullname, category= :category,price = :price, stock= :stock,"
+            {
+                replacements: {
+                    product_id,
+                    product_name,
+                    category,
+                    price,
+                },
+                type: QueryTypes.INSERT,
+            }
+        )
     }
 }
 
 const deleteproduct = async (req: Request, res: Response): Promise<void> {
     try {
-        const { product_id } = req.body
-        const [product]
+        const { product_id } = req.body;
+        const producta await sequelize.query()
 
     } catch (error) {
         console.log("error in deleting products");
