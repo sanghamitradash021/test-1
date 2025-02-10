@@ -92,3 +92,8 @@ const deleteproduct = async (req: Request, res: Response): Promise<void> {
         console.log("error in deleting products");
     }
 }
+const controller = {
+    add: add
+}
+
+export default controller

@@ -2,8 +2,9 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { sequelize } from "./config/db";
-// import productRoutes from "./routes/productRoutes";
+import productRoutes from "./routes/productRoutes";
 import syncTables from "./models/syncmodel";
+
 
 dotenv.config();
 
@@ -14,7 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 
-// app.use("/api/Product",productRoutes);
+app.use("/api/Product", productRoutes);
 
 
 const startServer = async () => {
