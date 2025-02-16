@@ -1,99 +1,163 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
+import type { Request, Response } from "express";
+// import cors from "cors";
+// import dotenv from "dotenv";
 import { sequelize } from "../config/db";
-import Product from "../models/Product";
 import { QueryTypes } from "sequelize";
 
-
-const add = async (req: Request, res: Response): Promise<void> {
+/**
+ * Adds a new product to the database.
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>}
+ */
+const add = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { product_id, product_name, category, price }: any = req.body;
+        const { product_name, category, price, stock } = req.body;
 
-        const [existingprod] = (await sequelize.query("SELECT * from Products WHERE product_id=:product_id",
+        const [result] = await sequelize.query(
+            `INSERT INTO Products (product_name, category, price, stock)
+            VALUES (:product_name, :category, :price, :stock)`,
             {
-                replacements: {
-                    product_id,
-                    product_name,
-                    category,
-                    price,
-                },
-                type: QueryTypes.SELECT,
-
-            }
-        ));
-
-        // if (existingprod) {
-        //     res.status(400).json({message: "prod exist"})
-        //     return;
-        // }
-        const newprod = await sequelize.query(
-            `INSERT INTO Products (product_id, product_name,category,price) INTO
-            VALUES (":product_id,":product_name",":category",":price") `,
-            {
-                replacements: {
-                    product_id,
-                    product_name,
-                    category,
-                    price,
-                },
+                replacements: { product_name, category, price, stock },
                 type: QueryTypes.INSERT,
             }
         );
 
+        const newProductId = (result as any)[0];
+        const [newProduct] = await sequelize.query(
+            "SELECT * FROM Products WHERE product_id = :id",
+            {
+                replacements: { id: newProductId },
+                type: QueryTypes.SELECT,
+            }
+        );
 
+        res.status(201).json(newProduct);
     } catch (error) {
-        console.log("error in adding");
+        res.status(500).json({ message: 'Error creating product', error });
     }
-}
-
-const getproduct = async (req: Request, res: Response): Promise<void> {
-    try {
-
-        const { product_id } = req.body;
-        console.log("id ", product_id);
-
-        const allprod = await sequelize.query("SELECT * FROM Products ");
-        res.json(allprod[0]);
-
-    } catch (error) {
-        res.status(500).json({ message: " error in getting products" })
-
-    }
-
 };
 
-const updateproduct = async (req: Request, res: Response): Promise<void> {
+/**
+ * Retrieves all products from the database.
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>}
+ */
+const getAllProducts = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { product_id, product_name, category, price }: any = req.body;
-        const result = (await sequelize.query(` `))
+        const products = await sequelize.query(
+            "SELECT * FROM Products",
+            { type: QueryTypes.SELECT }
+        );
 
-        await sequelize.query(
-            "UPDATE Users SET product_name = :fullname, category= :category,price = :price, stock= :stock,"
-            {
-                replacements: {
-                    product_id,
-                    product_name,
-                    category,
-                    price,
-                },
-                type: QueryTypes.INSERT,
-            }
-        )
-    }
-}
-
-const deleteproduct = async (req: Request, res: Response): Promise<void> {
-    try {
-        const { product_id } = req.body;
-        const producta await sequelize.query()
-
+        res.json(products);
     } catch (error) {
-        console.log("error in deleting products");
+        res.status(500).json({ message: 'Error fetching products', error });
     }
-}
-const controller = {
-    add: add
-}
+};
 
-export default controller
+/**
+ * Retrieves a single product by its ID.
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>}
+ */
+const getProductById = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+        const [product] = await sequelize.query(
+            "SELECT * FROM Products WHERE product_id = :id",
+            {
+                replacements: { id },
+                type: QueryTypes.SELECT,
+            }
+        );
+
+        if (!product) {
+            res.status(404).json({ message: 'Product not found' });
+            return;
+        }
+
+        res.json(product);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching product', error });
+    }
+};
+
+/**
+ * Updates an existing product by its ID.
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>}
+ */
+const updateProduct = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+        const { product_name, category, price, stock } = req.body;
+
+        const [updated] = await sequelize.query(
+            `UPDATE Products 
+             SET product_name = :product_name, category = :category, price = :price, stock = :stock 
+             WHERE product_id = :id`,
+            {
+                replacements: { id, product_name, category, price, stock },
+                type: QueryTypes.UPDATE,
+            }
+        );
+
+        if (updated === 0) {
+            res.status(404).json({ message: 'Product not found' });
+            return;
+        }
+
+        const [updatedProduct] = await sequelize.query(
+            "SELECT * FROM Products WHERE product_id = :id",
+            {
+                replacements: { id },
+                type: QueryTypes.SELECT,
+            }
+        );
+
+        res.json(updatedProduct);
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating product', error });
+    }
+};
+
+/**
+ * Deletes a product by its ID.
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>}
+ */
+const deleteProduct = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+        const result = await sequelize.query(
+            "DELETE FROM Products WHERE product_id = :id",
+            {
+                replacements: { id },
+                type: QueryTypes.DELETE,
+            }
+        );
+
+        if ((result as any).affectedRows === 0) {
+            res.status(404).json({ message: 'Product not found' });
+            return;
+        }
+
+        res.json({ message: 'Product deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting product', error });
+    }
+};
+
+const controller = {
+    add,
+    getAllProducts,
+    getProductById,
+    updateProduct,
+    deleteProduct,
+};
+export default controller;

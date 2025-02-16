@@ -4,12 +4,14 @@ import dotenv from "dotenv";
 import { sequelize } from "./config/db";
 import productRoutes from "./routes/productRoutes";
 import syncTables from "./models/syncmodel";
+import { swaggerDocs } from './swagger';
 
 
 dotenv.config();
 
 const app = express();
 const PORT: number = Number(process.env.PORT) || 3000
+swaggerDocs(app, PORT);
 
 app.use(cors());
 app.use(express.json());
